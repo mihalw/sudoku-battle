@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Sudoku Battle</title>
+	<link rel="stylesheet" href="main.css">
+	<link rel="stylesheet" href="node_modules/skeleton-css/css/skeleton.css">
+</head>
+<style>
+	img {
+		display: block;
+		margin-left: auto;
+		margin-right: auto;
+	}
+</style>
+
+<body>
+	<div class="container">
+		<div class="menu">
+			<img class="center" src="http://localhost:5000/images/sudoku.png" alt="Sudoku" height="200" width="200"
+				id='img'><br />
+			<h1 align="center">Sudoku Battle</h1>
+			<h3>Zasady:</h3>
+			<ol>
+				<li>Gracz 1 tworzy nową grę i podaje swój nick</li>
+				<li>Gracz 2 dołącza do pokoju podając swój nick i ID pokoju</li>
+				<li>Gracze jednocześnie wypełniają tę samą planszę sudoku. Widzą pola uzupełnione przez przeciwnika</li>
+				<li>Za każde poprawne uzupełnienie pola gracz otrzymuje 1 punkt, za błędne -1 punkt</li>
+				<li>Wygrywa gracz z większą ilością punktów</li>
+			</ol>
+			<h4>Nowy pokój</h4>
+			<input type="text" name="name" id="nameNew" placeholder="Wpisz swój nick" required>
+			<button id="new">Nowy pokój gry</button>
+			<br><br>
+			<h4>Dołącz do istniejącego pokoju i zacznij grę</h4>
+			<input type="text" name="name" id="nameJoin" placeholder="Wpisz swój nick" required>
+			<input type="text" name="room" id="room" placeholder="Wpisz ID pokoju" required>
+			<button id="join">Dołącz do pokoju</button>
+		</div>
+		<div class="welcome" style="display: none;">
+			<h2 id="userHello"></h2>
+			<h3 id="turn"></h3>
+		</div>
+	</div>
+	<canvas style="display: none;" id="sudoku" width="600" height="600" style="border:1px solid black;">Twoja
+		przegladarka nie obsluguje elementu canvas!</canvas>
+	<script src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="main.js"></script>
+</body>
+
+</html>
