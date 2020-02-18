@@ -1,10 +1,8 @@
 (function init() {
-  var player1Name;
-  var player2Name;
-  var game;
+  var player1Name, player2Name;
   var roomId;
   var column, row;
-  var elements = [];
+  var elements = [], board = [];
 
   var width = 60;
   var height = 60;
@@ -62,9 +60,9 @@
         return;
     }
     if (elements[9 * row + column] == 0) {
-      document.getElementById('sudoku').getContext('2d').fillText(input, left + 20, top + 40);
+      //document.getElementById('sudoku').getContext('2d').fillText(input, left + 20, top + 40);
       elements[9 * row + column] = input;
-      //socket.emit('updateBoard', {elements: elements, roomID});
+      socket.emit('updateBoard', {indexNumber: 9*row + column, room: roomId, number: input, left: left, top: top});
     }
   }, false);
 
@@ -74,92 +72,80 @@
     $('#userHello').html(message);
   }
 
-  // roomId Id of the room in which the game is running on the server.
-  class Game {
-    constructor(roomId, board) {
-      this.roomId = roomId;
-      this.board = Array.from(board);
-      this.moves = 0;
-    }
+  function createGameBoard(board) {
+    var context = document.getElementById('sudoku').getContext('2d');
 
-    // Create the Game board by attaching event listeners to the buttons.
-    createGameBoard() {
-      var context = document.getElementById('sudoku').getContext('2d');
+    $('.menu').css('display', 'none');
+    $('.welcome').css('display', 'none');
+    document.getElementById("sudoku").style = "display:inline;";
+    context.font = "30px Arial";
 
-      $('.menu').css('display', 'none');
-      $('.welcome').css('display', 'none');
-      document.getElementById("sudoku").style = "display:inline;";
-      context.font = "30px Arial";
+    for (var i = 0; i < 9; i++)
+      for (var j = 0; j < 9; j++) {
+        elements.push(board[9 * i + j]);
+      }
 
-      for (var i = 0; i < 9; i++)
-        for (var j = 0; j < 9; j++) {
-          elements.push(this.board[9 * i + j]);
+    for (var i = 0; i < 9; i++)
+      for (var j = 0; j < 9; j++) {
+        top = 20 + 60 * j;
+        left = 20 + 60 * i;
+        context.fillStyle = 'white';
+        context.fillRect(left, top, width, height);
+        context.fillStyle = 'black';
+        if (elements[9 * i + j] != '0') {
+          context.fillText(elements[9 * i + j], left + 20, top + 40);
         }
+        context.rect(left, top, 60, 60);
+        context.strokeStyle = 'black';
+        context.lineWidth = 1;
+        context.stroke();
+      }
 
-      for (var i = 0; i < 9; i++)
-        for (var j = 0; j < 9; j++) {
-          top = 20 + 60 * j;
-          left = 20 + 60 * i;
-          context.fillStyle = 'white';
-          context.fillRect(left, top, width, height);
-          context.fillStyle = 'black';
-          if (elements[9 * i + j] != '0') {
-            context.fillText(elements[9 * i + j], left + 20, top + 40);
-          }
-          context.rect(left, top, 60, 60);
-          context.strokeStyle = 'black';
-          context.lineWidth = 1;
-          context.stroke();
-        }
-
-      context.beginPath();
-      context.rect(20, 20, 540, 540);
-      context.rect(20, 200, 540, 180);
-      context.rect(200, 20, 180, 540);
-      context.lineWidth = 5;
-      context.strokeStyle = "black";
-      context.stroke();
-    }
+    context.beginPath();
+    context.rect(20, 20, 540, 540);
+    context.rect(20, 200, 540, 180);
+    context.rect(200, 20, 180, 540);
+    context.lineWidth = 5;
+    context.strokeStyle = "black";
+    context.stroke();
   }
 
   // Create a new game. Emit newGame event.
   $('#new').on('click', () => {
-    const name = $('#nameNew').val();
-    if (!name) {
+    player1Name = $('#nameNew').val();
+    if (!player1Name) {
       alert('Please enter your name!');
       return;
     }
-    socket.emit('createGame', { name });
-    player1Name = name;
+    socket.emit('createGame', { name: player1Name });
   });
 
   // Join an existing game on the entered roomId. Emit the joinGame event.
   $('#join').on('click', () => {
-    const name = $('#nameJoin').val();
-    const roomID = $('#room').val();
-    if (!name || !roomID) {
+    player2Name = $('#nameJoin').val();
+    roomId = $('#room').val();
+    if (!player2Name || !roomId) {
       alert('Wprowadz swoja nazwe oraz ID pokoju.');
       return;
     }
-    socket.emit('joinGame', { name, room: roomID });
-    player2Name = name;
+    socket.emit('joinGame', { name: player2Name, room: roomId });
   });
 
   // New Room created by current client. Update the UI.
   socket.on('newRoom', (data) => {
     const message = `Witaj, ${data.name}. Nazwa pokoju to: ${data.room}. Czekaj na drugiego gracza...`;
+    roomId = data.room;
     welcomePlayer(message);
   });
 
   socket.on('newBattle', (data) => {
-    game = new Game(data.room, data.board);
-    game.createGameBoard();
+    board = data.board;
+    createGameBoard(data.board);
   });
 
   socket.on('updatedBoard', (data) => {
-    elements = data;
-    game = new Game(data.room, data.board);
-    game.createGameBoard();
+    board[data.indexNumber] = data.number;
+    document.getElementById('sudoku').getContext('2d').fillText(data.number, data.left + 20, data.top + 40);
   });
 
 }());

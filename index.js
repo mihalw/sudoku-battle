@@ -5,9 +5,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-let rooms = 0;
-var pointsPlayer1 = 0;
-var pointsPlayer2 = 0;
+var rooms = 0;
 
 var boards = [
     "070020000000900700002104090000010500600089004031500860005400600400800002080050000",
@@ -56,37 +54,29 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
 
-    // Create a new game room and notify the creator of game.
     socket.on('createGame', (data) => {
         socket.join(`room-${++rooms}`);
         socket.emit('newRoom', { name: data.name, room: `room-${rooms}` });
     });
 
-    // Connect the Player 2 to the room he requested. Show error if room full.
     socket.on('joinGame', function (data) {
         var room = io.nsps['/'].adapter.rooms[data.room];
         if (room && room.length === 1) {
             socket.join(data.room);
-            io.sockets.in(data.room).emit('newBattle', { room: data.room, board: boards[1] });
+            io.sockets.in(data.room).emit('newBattle', { room: data.room, board: boards[1] }); // losowanie planszy dodac
         }
         else {
             socket.emit('err', { message: 'Sorry, The room is full!' });
         }
     });
 
-    /**
-       * Handle the turn played by either player and notify the other.
-       */
     socket.on('updateBoard', (data) => {
-        io.sockets.in(data.room).emit('updatedBoard', { data });
+        io.sockets.in(data.room).emit('updatedBoard', { indexNumber: data.indexNumber, number: data.number, left: data.left, top: data.top });
     });
 
-    /**
-       * Notify the players about the victor.
-       */
-    socket.on('gameEnded', (data) => {
-        socket.broadcast.to(data.room).emit('gameEnd', data);
-    });
+    // socket.on('gameEnded', (data) => {
+    //     socket.broadcast.to(data.room).emit('gameEnd', data);
+    // });
 });
 
 server.listen(process.env.PORT || 5000);
