@@ -39,11 +39,18 @@
 		</div>
 		<div class="welcome" style="display: none;">
 			<h2 id="userHello"></h2>
-			<h3 id="turn"></h3>
 		</div>
 	</div>
-	<canvas style="display: none;" id="sudoku" width="600" height="600" style="border:1px solid black;">Twoja
-		przegladarka nie obsluguje elementu canvas!</canvas>
+
+	<div class="wrapper">
+		<canvas style="display: none;" id="sudoku" width="600" height="600" style="border:1px solid black;"
+			float="left;">Twoja
+			przegladarka nie obsluguje elementu canvas!</canvas>
+		<div class="points" style="display: none;" float="left;">
+			<h3 id="playersPoints"></h3>
+		</div>
+	</div>
+
 	<script src="node_modules/jquery/dist/jquery.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 	<script src="main.js"></script>

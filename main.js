@@ -1,8 +1,8 @@
 (function init() {
-  var player1Name, player2Name;
-  var roomId;
+  var player1Name, player2Name, player1Points = 0, player2Points = 0;
+  var roomId, boardIdx;
   var column, row;
-  var elements = [], board = [];
+  var board = [], resultBoard = [];
 
   var width = 60;
   var height = 60;
@@ -28,49 +28,16 @@
   document.addEventListener('keypress', function (event) {
     var keycode = event.keyCode;
     var input;
-    switch (keycode) {
-      case 49:
-        input = 1;
-        break;
-      case 50:
-        input = 2;
-        break;
-      case 51:
-        input = 3;
-        break;
-      case 52:
-        input = 4;
-        break;
-      case 53:
-        input = 5;
-        break;
-      case 54:
-        input = 6;
-        break;
-      case 55:
-        input = 7;
-        break;
-      case 56:
-        input = 8;
-        break;
-      case 57:
-        input = 9;
-        break;
-      default:
-        return;
-    }
-    if (elements[9 * row + column] == 0) {
-      //document.getElementById('sudoku').getContext('2d').fillText(input, left + 20, top + 40);
-      elements[9 * row + column] = input;
-      socket.emit('updateBoard', {indexNumber: 9*row + column, room: roomId, number: input, left: left, top: top});
+    if (keycode >= 49 && keycode <= 57)
+      input = keycode - 48;
+    else
+      return;
+
+    if (board[9 * row + column] == 0 && input == resultBoard[9 * row + column]) {
+      socket.emit('updateBoard', {indexNumber: 9*row + column, room: roomId, number: input, left: left, top: top, boardIdx: boardIdx,
+      player1Name: player1Name, player2Name: player2Name});
     }
   }, false);
-
-  function welcomePlayer(message) {
-    $('.menu').css('display', 'none');
-    $('.welcome').css('display', 'block');
-    $('#userHello').html(message);
-  }
 
   function createGameBoard(board) {
     var context = document.getElementById('sudoku').getContext('2d');
@@ -82,18 +49,13 @@
 
     for (var i = 0; i < 9; i++)
       for (var j = 0; j < 9; j++) {
-        elements.push(board[9 * i + j]);
-      }
-
-    for (var i = 0; i < 9; i++)
-      for (var j = 0; j < 9; j++) {
         top = 20 + 60 * j;
         left = 20 + 60 * i;
         context.fillStyle = 'white';
         context.fillRect(left, top, width, height);
         context.fillStyle = 'black';
-        if (elements[9 * i + j] != '0') {
-          context.fillText(elements[9 * i + j], left + 20, top + 40);
+        if (board[9 * i + j] != '0') {
+          context.fillText(board[9 * i + j], left + 20, top + 40);
         }
         context.rect(left, top, 60, 60);
         context.strokeStyle = 'black';
@@ -110,7 +72,17 @@
     context.stroke();
   }
 
-  // Create a new game. Emit newGame event.
+  function welcomePlayer(message) {
+    $('.menu').css('display', 'none');
+    $('.welcome').css('display', 'block');
+    $('#userHello').html(message);
+  }
+
+  function showPoints(player1Points, player2Points) {
+    $('.points').css('display', 'block');
+    $('#playersPoints').html(`${player1Name}: ${player1Points} <br\> ${player2Name}: ${player2Points}`);
+  }
+
   $('#new').on('click', () => {
     player1Name = $('#nameNew').val();
     if (!player1Name) {
@@ -120,7 +92,6 @@
     socket.emit('createGame', { name: player1Name });
   });
 
-  // Join an existing game on the entered roomId. Emit the joinGame event.
   $('#join').on('click', () => {
     player2Name = $('#nameJoin').val();
     roomId = $('#room').val();
@@ -131,21 +102,27 @@
     socket.emit('joinGame', { name: player2Name, room: roomId });
   });
 
-  // New Room created by current client. Update the UI.
   socket.on('newRoom', (data) => {
-    const message = `Witaj, ${data.name}. Nazwa pokoju to: ${data.room}. Czekaj na drugiego gracza...`;
     roomId = data.room;
-    welcomePlayer(message);
+    welcomePlayer(`Witaj ${data.name}! <br/> Nazwa pokoju to: ${data.room} <br/> Czekaj na drugiego gracza...`);
   });
 
   socket.on('newBattle', (data) => {
     board = data.board;
-    createGameBoard(data.board);
+    resultBoard = data.resultBoard;
+    boardIdx = data.boardIdx;
+    createGameBoard(board);
+    showPoints(player1Points, player2Points);    
   });
 
   socket.on('updatedBoard', (data) => {
     board[data.indexNumber] = data.number;
     document.getElementById('sudoku').getContext('2d').fillText(data.number, data.left + 20, data.top + 40);
+    if (data.player === player1Name && typeof data.player1Name === "undefined")
+      player1Points++;
+    else
+      player2Points++;
+      $('#playersPoints').html(`${player1Name}: ${player1Points} <br\> ${player2Name}: ${player2Points}`);
   });
 
 }());

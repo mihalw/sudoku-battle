@@ -1,3 +1,17 @@
 .menu{
 	font-family: Ubuntu;
 }
+
+.welcome{
+	font-family: Ubuntu;
+}
+
+#playersPoints{
+	font-family: Ubuntu;
+	top: 100px;
+	right: 500px;
+}
+
+.wrapper {
+	display: flex;
+  }
