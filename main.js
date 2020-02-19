@@ -7,8 +7,39 @@
   var width = 60;
   var height = 60;
   var top, left;
+  var begin = 0;
+  var welcomeStage = 0;
 
   const socket = io.connect('http://localhost:5000');
+
+  if (typeof (Storage) !== "undefined") {
+    if (sessionStorage.counter > 0) {
+      begin = sessionStorage.begin;
+      welcomeStage = sessionStorage.welcomeStage;
+      if (welcomeStage) {
+        welcomeStage = sessionStorage.welcomeStage;
+        yourName = sessionStorage.yourName;
+        roomId = JSON.parse(sessionStorage.getItem("roomId"));
+        console.log(roomId);
+        welcomePlayer(`Witaj ${yourName}! <br/> Nazwa pokoju to: ${roomId} <br/> Czekaj na drugiego gracza...`);
+        socket.emit('connectExistingGame', {room: roomId});
+      }
+      if (begin) {
+        roomId = JSON.parse(sessionStorage.getItem("roomId"));
+        socket.emit('joinGame', { room: roomId, refresh: sessionStorage.counter });
+        board = JSON.parse(sessionStorage.getItem("board"));
+        resultBoard = JSON.parse(sessionStorage.getItem("resultBoard"));
+        yourName = sessionStorage.yourName; yourScore = sessionStorage.yourScore; opponentScore = sessionStorage.opponentScore;
+        correctMoves = sessionStorage.correctMoves; requiredMoves = sessionStorage.requiredMoves;
+        createGameBoard(board);
+        showPoints();
+      }
+    }
+    else {
+      sessionStorage.counter = 1;
+    }
+
+  }
 
   document.getElementById('sudoku').addEventListener('click', function (event) {
     var elemLeft = document.getElementById('sudoku').offsetLeft, elemTop = document.getElementById('sudoku').offsetTop;
@@ -47,7 +78,6 @@
 
   function createGameBoard(board) {
     var context = document.getElementById('sudoku').getContext('2d');
-
     $('.menu').css('display', 'none');
     $('.welcome').css('display', 'none');
     document.getElementById("sudoku").style = "display:inline;";
@@ -95,6 +125,7 @@
       alert('Please enter your name!');
       return;
     }
+    sessionStorage.yourName = yourName;
     socket.emit('createGame', {});
   });
 
@@ -105,18 +136,30 @@
       alert('Wprowadz swoja nazwe oraz ID pokoju.');
       return;
     }
-    socket.emit('joinGame', { room: roomId });
+    sessionStorage.yourName = yourName;
+    socket.emit('joinGame', { room: roomId, refresh: 0 });
   });
 
   socket.on('newRoom', (data) => {
     roomId = data.room;
+    sessionStorage.setItem('roomId', JSON.stringify(roomId));
     welcomePlayer(`Witaj ${yourName}! <br/> Nazwa pokoju to: ${data.room} <br/> Czekaj na drugiego gracza...`);
+    welcomeStage = 1;
+    sessionStorage.welcomeStage = welcomeStage;
   });
 
   socket.on('newBattle', (data) => {
+    welcomeStage = 0;
+    sessionStorage.welcomeStage = welcomeStage;
+    begin = 1;
+    sessionStorage.begin = begin;
+    sessionStorage.setItem('roomId', JSON.stringify(data.room));
     board = data.board;
+    sessionStorage.setItem("board", JSON.stringify(board));
     resultBoard = data.resultBoard;
+    sessionStorage.setItem("resultBoard", JSON.stringify(resultBoard));
     boardIdx = data.boardIdx;
+    sessionStorage.boardIdx = boardIdx;
     createGameBoard(board);
     showPoints();
     movesRequired();
@@ -124,6 +167,7 @@
 
   socket.on('updatedBoard', (data) => {
     board[data.indexNumber] = data.number;
+    sessionStorage.setItem("board", JSON.stringify(board));
     document.getElementById('sudoku').getContext('2d').fillText(data.number, data.left + 20, data.top + 40);
     if (data.player === yourName) {
       yourScore++;
@@ -133,8 +177,11 @@
       opponentScore++;
       correctMoves++;
     }
+    sessionStorage.yourScore = yourScore;
+    sessionStorage.opponentScore = opponentScore;
+    sessionStorage.correctMoves = correctMoves;
     $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
-    
+
     if (correctMoves == requiredMoves) {
       if (yourScore > opponentScore)
         alert("Wygrales!");
@@ -142,6 +189,7 @@
         alert("Przegrales!");
       if (yourScore == opponentScore)
         alert("Remis!");
+      sessionStorage.clear();
     }
   });
 
@@ -150,6 +198,8 @@
       yourScore--;
     else
       opponentScore--;
+    sessionStorage.yourScore = yourScore;
+    sessionStorage.opponentScore = opponentScore;
     $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
   });
 
@@ -158,7 +208,6 @@
       if (board[i] != resultBoard[i])
         requiredMoves++;
     }
-    alert(requiredMoves);
+    sessionStorage.requiredMoves = requiredMoves;
   }
-
 }());
