@@ -108,7 +108,8 @@ io.on('connection', (socket) => {
         var room = io.nsps['/'].adapter.rooms[data.room];
         if (room && room.length === 1) {
             socket.join(data.room);
-            var boardIdx = getRandomInt(0, 37);
+            //var boardIdx = getRandomInt(0, 37);
+            var boardIdx = 1;
             io.sockets.in(data.room).emit('newBattle', {
                 room: data.room, board: Array.from(boards[boardIdx]),
                 resultBoard: Array.from(resultBoards[boardIdx]), boardIdx: boardIdx
@@ -125,7 +126,6 @@ io.on('connection', (socket) => {
 
     socket.on('failedUpdateBoard', (data) => {
         io.sockets.in(data.room).emit('playerFailed', { player: data.player });
-        console.log(data.player);
     });
 });
 

@@ -1,7 +1,7 @@
 (function init() {
   var yourName, yourScore = 0, opponentScore = 0;
   var roomId, boardIdx;
-  var column, row;
+  var column, row, correctMoves = 0, requiredMoves = 0;
   var board = [], resultBoard = [];
 
   var width = 60;
@@ -119,16 +119,30 @@
     boardIdx = data.boardIdx;
     createGameBoard(board);
     showPoints();
+    movesRequired();
   });
 
   socket.on('updatedBoard', (data) => {
     board[data.indexNumber] = data.number;
     document.getElementById('sudoku').getContext('2d').fillText(data.number, data.left + 20, data.top + 40);
-    if (data.player === yourName)
+    if (data.player === yourName) {
       yourScore++;
-    else
+      correctMoves++;
+    }
+    else {
       opponentScore++;
+      correctMoves++;
+    }
     $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
+    
+    if (correctMoves == requiredMoves) {
+      if (yourScore > opponentScore)
+        alert("Wygrales!");
+      if (yourScore < opponentScore)
+        alert("Przegrales!");
+      if (yourScore == opponentScore)
+        alert("Remis!");
+    }
   });
 
   socket.on('playerFailed', (data) => {
@@ -138,5 +152,13 @@
       opponentScore--;
     $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
   });
+
+  function movesRequired() {
+    for (var i = 0; i < 81; i++) {
+      if (board[i] != resultBoard[i])
+        requiredMoves++;
+    }
+    alert(requiredMoves);
+  }
 
 }());
