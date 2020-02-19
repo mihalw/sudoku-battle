@@ -99,9 +99,9 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
 
-    socket.on('createGame', (data) => {
+    socket.on('createGame', () => {
         socket.join(`room-${++rooms}`);
-        socket.emit('newRoom', { name: data.name, room: `room-${rooms}` });
+        socket.emit('newRoom', { room: `room-${rooms}` });
     });
 
     socket.on('joinGame', function (data) {
@@ -120,10 +120,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('updateBoard', (data) => {
-        if (typeof data.player1Name !== "undefined")
-            io.sockets.in(data.room).emit('updatedBoard', { indexNumber: data.indexNumber, number: data.number, left: data.left, top: data.top, player: data.player1Name });
-        else
-            io.sockets.in(data.room).emit('updatedBoard', { indexNumber: data.indexNumber, number: data.number, left: data.left, top: data.top, player: data.player2Name });
+        io.sockets.in(data.room).emit('updatedBoard', { indexNumber: data.indexNumber, number: data.number, left: data.left, top: data.top, player: data.player });
+    });
+
+    socket.on('failedUpdateBoard', (data) => {
+        io.sockets.in(data.room).emit('playerFailed', { player: data.player });
+        console.log(data.player);
     });
 });
 

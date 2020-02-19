@@ -1,5 +1,5 @@
 (function init() {
-  var player1Name, player2Name, player1Points = 0, player2Points = 0;
+  var yourName, yourScore = 0, opponentScore = 0;
   var roomId, boardIdx;
   var column, row;
   var board = [], resultBoard = [];
@@ -34,8 +34,14 @@
       return;
 
     if (board[9 * row + column] == 0 && input == resultBoard[9 * row + column]) {
-      socket.emit('updateBoard', {indexNumber: 9*row + column, room: roomId, number: input, left: left, top: top, boardIdx: boardIdx,
-      player1Name: player1Name, player2Name: player2Name});
+      socket.emit('updateBoard', {
+        indexNumber: 9 * row + column, room: roomId, number: input, left: left, top: top, boardIdx: boardIdx,
+        player: yourName
+      });
+    }
+
+    if (board[9 * row + column] == 0 && input != resultBoard[9 * row + column]) {
+      socket.emit('failedUpdateBoard', { room: roomId, player: yourName });
     }
   }, false);
 
@@ -78,33 +84,33 @@
     $('#userHello').html(message);
   }
 
-  function showPoints(player1Points, player2Points) {
+  function showPoints() {
     $('.points').css('display', 'block');
-    $('#playersPoints').html(`${player1Name}: ${player1Points} <br\> ${player2Name}: ${player2Points}`);
+    $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
   }
 
   $('#new').on('click', () => {
-    player1Name = $('#nameNew').val();
-    if (!player1Name) {
+    yourName = $('#nameNew').val();
+    if (!yourName) {
       alert('Please enter your name!');
       return;
     }
-    socket.emit('createGame', { name: player1Name });
+    socket.emit('createGame', {});
   });
 
   $('#join').on('click', () => {
-    player2Name = $('#nameJoin').val();
+    yourName = $('#nameJoin').val();
     roomId = $('#room').val();
-    if (!player2Name || !roomId) {
+    if (!yourName || !roomId) {
       alert('Wprowadz swoja nazwe oraz ID pokoju.');
       return;
     }
-    socket.emit('joinGame', { name: player2Name, room: roomId });
+    socket.emit('joinGame', { room: roomId });
   });
 
   socket.on('newRoom', (data) => {
     roomId = data.room;
-    welcomePlayer(`Witaj ${data.name}! <br/> Nazwa pokoju to: ${data.room} <br/> Czekaj na drugiego gracza...`);
+    welcomePlayer(`Witaj ${yourName}! <br/> Nazwa pokoju to: ${data.room} <br/> Czekaj na drugiego gracza...`);
   });
 
   socket.on('newBattle', (data) => {
@@ -112,17 +118,25 @@
     resultBoard = data.resultBoard;
     boardIdx = data.boardIdx;
     createGameBoard(board);
-    showPoints(player1Points, player2Points);    
+    showPoints();
   });
 
   socket.on('updatedBoard', (data) => {
     board[data.indexNumber] = data.number;
     document.getElementById('sudoku').getContext('2d').fillText(data.number, data.left + 20, data.top + 40);
-    if (data.player === player1Name && typeof data.player1Name === "undefined")
-      player1Points++;
+    if (data.player === yourName)
+      yourScore++;
     else
-      player2Points++;
-      $('#playersPoints').html(`${player1Name}: ${player1Points} <br\> ${player2Name}: ${player2Points}`);
+      opponentScore++;
+    $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
+  });
+
+  socket.on('playerFailed', (data) => {
+    if (data.player === yourName)
+      yourScore--;
+    else
+      opponentScore--;
+    $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
   });
 
 }());
