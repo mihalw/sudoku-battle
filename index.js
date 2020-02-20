@@ -32,8 +32,14 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
 
     socket.on('createGame', () => {
-        socket.join(`room-${++rooms}`);
-        socket.emit('newRoom', { room: `room-${rooms}` });
+        var str = `room-${++rooms}`;
+        var buf = new ArrayBuffer(str.length * 2);
+        var bufView = new Uint16Array(buf);
+        for (var i = 0, strLen = str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        socket.join(`room-${rooms}`);
+        socket.emit('newRoom', buf);
     });
 
     socket.on('connectExistingGame', (data) => {
@@ -55,12 +61,29 @@ io.on('connection', (socket) => {
     });
 
     socket.on('updateBoard', (data) => {
-        io.sockets.in(data.room).emit('updatedBoard', { indexNumber: data.indexNumber, number: data.number, left: data.left, top: data.top, player: data.player });
-
+        var buf = new ArrayBuffer(8);
+        var bufView = new Uint16Array(buf);
+        bufView[0] = data.indexNumber;
+        bufView[1] = data.number;
+        bufView[2] = data.left;
+        bufView[3] = data.top;
+        var str = data.player;
+        var buf2 = new ArrayBuffer(str.length * 2);
+        var bufView2 = new Uint16Array(buf2);
+        for (var i = 0, strLen = str.length; i < strLen; i++) {
+            bufView2[i] = str.charCodeAt(i);
+        }
+        io.sockets.in(data.room).emit('updatedBoard', { buf: buf, player: buf2 });
     });
 
     socket.on('failedUpdateBoard', (data) => {
-        io.sockets.in(data.room).emit('playerFailed', { player: data.player });
+        var str = data.player;
+        var buf = new ArrayBuffer(str.length * 2);
+        var bufView = new Uint16Array(buf);
+        for (var i = 0, strLen = str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        io.sockets.in(data.room).emit('playerFailed', { player: buf });
     });
 });
 

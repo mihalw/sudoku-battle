@@ -142,9 +142,9 @@
   });
 
   socket.on('newRoom', (data) => {
-    roomId = data.room;
+    roomId = String.fromCharCode.apply(null, new Uint16Array(data));
     sessionStorage.setItem('roomId', JSON.stringify(roomId));
-    welcomePlayer(`Witaj ${yourName}! <br/> Nazwa pokoju to: ${data.room} <br/> Czekaj na drugiego gracza...`);
+    welcomePlayer(`Witaj ${yourName}! <br/> Nazwa pokoju to: ${roomId} <br/> Czekaj na drugiego gracza...`);
     welcomeStage = 1;
     sessionStorage.welcomeStage = welcomeStage;
   });
@@ -167,10 +167,11 @@
   });
 
   socket.on('updatedBoard', (data) => {
-    board[data.indexNumber] = data.number;
+    var buf = new Uint16Array(data.buf);
+    board[buf[0]] = buf[1];
     sessionStorage.setItem("board", JSON.stringify(board));
-    document.getElementById('sudoku').getContext('2d').fillText(data.number, data.left + 20, data.top + 40);
-    if (data.player === yourName) {
+    document.getElementById('sudoku').getContext('2d').fillText(buf[1], buf[2] + 20, buf[3] + 40);
+    if (String.fromCharCode.apply(null, new Uint16Array(data.player)) === yourName) {
       yourScore++;
       correctMoves++;
     }
@@ -181,9 +182,6 @@
     sessionStorage.yourScore = yourScore;
     sessionStorage.opponentScore = opponentScore;
     sessionStorage.correctMoves = correctMoves;
-    console.log(yourScore);
-    console.log(opponentScore);
-    console.log(correctMoves);
     $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
 
     if (correctMoves == requiredMoves) {
@@ -198,7 +196,7 @@
   });
 
   socket.on('playerFailed', (data) => {
-    if (data.player === yourName)
+    if (String.fromCharCode.apply(null, new Uint16Array(data.player)) === yourName)
       yourScore--;
     else
       opponentScore--;
