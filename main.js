@@ -123,7 +123,7 @@
   $('#new').on('click', () => {
     yourName = $('#nameNew').val();
     if (!yourName) {
-      alert('Please enter your name!');
+      alert('Wprowadz swoj nick!');
       return;
     }
     sessionStorage.yourName = yourName;
@@ -154,12 +154,13 @@
     sessionStorage.welcomeStage = welcomeStage;
     begin = 1;
     sessionStorage.begin = begin;
-    sessionStorage.setItem('roomId', JSON.stringify(data.room));
-    board = data.board;
+    roomId = String.fromCharCode.apply(null, new Uint16Array(data.room));
+    sessionStorage.setItem('roomId', JSON.stringify(roomId));
+    board = new Uint16Array(data.board);
     sessionStorage.setItem("board", JSON.stringify(board));
-    resultBoard = data.resultBoard;
+    resultBoard = new Uint16Array(data.resultBoard);
     sessionStorage.setItem("resultBoard", JSON.stringify(resultBoard));
-    boardIdx = data.boardIdx;
+    boardIdx = new Uint16Array(data.boardIdx);
     sessionStorage.boardIdx = boardIdx;
     createGameBoard(board);
     showPoints();

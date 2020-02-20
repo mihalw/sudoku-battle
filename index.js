@@ -52,10 +52,31 @@ io.on('connection', (socket) => {
             socket.join(data.room);
             if (data.refresh == 0) {
                 var boardIdx = getRandomInt(0, 3);
-                io.sockets.in(data.room).emit('newBattle', {
-                    room: data.room, board: Array.from(boards[boardIdx]),
-                    resultBoard: Array.from(resultBoards[boardIdx]), boardIdx: boardIdx
-                });
+                
+                var str = String(data.room);
+                var buf = new ArrayBuffer(str.length * 2);
+                var bufView = new Uint16Array(buf);
+                for (var i = 0, strLen = str.length; i < strLen; i++) {
+                    bufView[i] = str.charCodeAt(i);
+                }
+
+                var buf2 = new ArrayBuffer(81*2);
+                var bufView2 = new Uint16Array(buf2);
+                for (var i = 0; i < 81; i++) {
+                    bufView2[i] = boards[boardIdx][i];
+                }
+
+                var buf3 = new ArrayBuffer(81*2);
+                var bufView3 = new Uint16Array(buf3);
+                for (var i = 0; i < 81; i++) {
+                    bufView3[i] = resultBoards[boardIdx][i];
+                }
+
+                var buf4 = new ArrayBuffer(2);
+                var bufView4 = new Uint16Array(buf4);
+                bufView4[0] = boardIdx;
+
+                io.sockets.in(data.room).emit('newBattle', {room: buf, board: buf2, resultBoard: buf3, boardIdx: buf4});
             }
         }
     });
