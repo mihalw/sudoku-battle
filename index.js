@@ -52,21 +52,15 @@ io.on('connection', (socket) => {
                 });
             }
         }
-        else {
-            console.log("Room is full :<");
-        }
     });
 
     socket.on('updateBoard', (data) => {
         io.sockets.in(data.room).emit('updatedBoard', { indexNumber: data.indexNumber, number: data.number, left: data.left, top: data.top, player: data.player });
+
     });
 
     socket.on('failedUpdateBoard', (data) => {
         io.sockets.in(data.room).emit('playerFailed', { player: data.player });
-    });
-
-    socket.on('disconnect', function(){
-        console.log('Disconnected');
     });
 });
 

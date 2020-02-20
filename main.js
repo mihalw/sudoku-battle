@@ -7,8 +7,7 @@
   var width = 60;
   var height = 60;
   var top, left;
-  var begin = 0;
-  var welcomeStage = 0;
+  var begin = 0, welcomeStage = 0;
 
   const socket = io.connect('http://localhost:5000');
 
@@ -20,7 +19,6 @@
         welcomeStage = sessionStorage.welcomeStage;
         yourName = sessionStorage.yourName;
         roomId = JSON.parse(sessionStorage.getItem("roomId"));
-        console.log(roomId);
         welcomePlayer(`Witaj ${yourName}! <br/> Nazwa pokoju to: ${roomId} <br/> Czekaj na drugiego gracza...`);
         socket.emit('connectExistingGame', {room: roomId});
       }
@@ -31,6 +29,9 @@
         resultBoard = JSON.parse(sessionStorage.getItem("resultBoard"));
         yourName = sessionStorage.yourName; yourScore = sessionStorage.yourScore; opponentScore = sessionStorage.opponentScore;
         correctMoves = sessionStorage.correctMoves; requiredMoves = sessionStorage.requiredMoves;
+        if (typeof yourScore === 'undefined') {
+          yourScore = 0; opponentScore = 0, correctMoves = 0;
+        }
         createGameBoard(board);
         showPoints();
       }
@@ -180,6 +181,9 @@
     sessionStorage.yourScore = yourScore;
     sessionStorage.opponentScore = opponentScore;
     sessionStorage.correctMoves = correctMoves;
+    console.log(yourScore);
+    console.log(opponentScore);
+    console.log(correctMoves);
     $('#playersPoints').html(`${yourName}: ${yourScore} <br\> Przeciwnik: ${opponentScore}`);
 
     if (correctMoves == requiredMoves) {
